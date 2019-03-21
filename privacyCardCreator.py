@@ -1,4 +1,4 @@
-import requests
+import requests, time
 
 cardListLength = 0
 
@@ -35,6 +35,7 @@ def mainMenu(token):
         print("Welcome, your current cards are:\n")
         showCurrentCards(token)
         print("\n1. Create a new card\n2. Delete a card\n3. Delete all cards\n4. Exit")
+        print("Length: "+str(cardListLength))
         userChoice = input("What would you like to do?: ")
 
         if(int(userChoice) == 1):
@@ -53,6 +54,7 @@ def mainMenu(token):
             mainMenu(token)
 
 def createCard(token):
+    global cardListLength
     cardName = input("Enter a card name: ")
     cardLimit = input("Set a card limit: ")
     print("Attempting to create some cards...")
@@ -97,6 +99,7 @@ def createCard(token):
         cardType = request_JSON["card"]["type"]
 
         printCardInfo(cardName, cardStatus, cardID, cardNum, cardCVV, monthExp, yearExp, cardSpendLimit, cardType)
+        cardListLength = cardListLength + 1
         createAnotherCard(token)
     else:
         print("ERROR: " + request_JSON["message"])
@@ -126,14 +129,16 @@ def deleteCard(token):
     cardID = getCardID(token, int(cardToDelete)-1)
     removeCard(token, cardID)
 
-def deleteAllCards(token):
-    userChoice = input("NOTE: This will remove all your currently open cards on Privacy, are you sure? ")
+def deleteAllCards(token): # NOT COMPLETE - HAVE TO WAIT UNTIL NEXT MONTH TO CREATE MORE CARDS
+    userChoice = input("NOTE: This will remove all your currently open cards on Privacy, are you sure? [Yes/no] ")
     if(userChoice.lower() == "yes"):
         print("Removing cards...")
-        print(cardListLength)
+        print("Card list length: "+str(cardListLength))
         for i in range(cardListLength):
             cardID = getCardID(token, i)
+            print("Removing: "+str(cardID)+"from i: "+str(i))
             removeCard(token, cardID)
+            time.sleep(1)
         
         print("Successfully removed all cards!\n")
     else:
@@ -181,14 +186,11 @@ def showCurrentCards(token):
     requestJSON = getRequest.json()
     cardList = requestJSON["cardList"]
     
-    if(cardListLength == 0):
-        print("No cards at the moment, you should make some.")
-    else: 
-        for cardIndex in range(len(cardList)):
-            if(cardList[cardIndex]["state"] == "OPEN"):
-                cardListLength = cardListLength + 1
-                openCardName = cardList[cardIndex]["memo"]
-                print(str(cardIndex+1)+") "+openCardName)
+    for cardIndex in range(len(cardList)):
+        if(cardList[cardIndex]["state"] == "OPEN"):
+            cardListLength = cardListLength + 1
+            openCardName = cardList[cardIndex]["memo"]
+            print(str(cardIndex+1)+") "+openCardName)
 
 def getCardID(token, target_cardIndex):
     link = "https://privacy.com/api/v1/card/"
